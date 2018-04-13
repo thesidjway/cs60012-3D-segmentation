@@ -1,3 +1,4 @@
+import sys
 import math
 import numpy as np
 import scipy.linalg
@@ -16,6 +17,43 @@ eta = 0.15
 
 k = 10
 
+colours = ["red", "green", "blue", "yellow", "violet", "cyan", "orange", "white", "grey", "khaki"]
+
+def writeoutputobj(fname, clusters, faces_array, vertices_array):
+	with open(fname, "w") as f:
+		f.write("mtllib colorfile.mtl\n\n")
+		ordered_clusters = []
+		for i in vertices_array:
+			f.write("v ")
+			f.write(str(i[0]))
+			f.write(" ")
+			f.write(str(i[1]))
+			f.write(" ")
+			f.write(str(i[2]))
+			f.write("\n")
+		f.write("\n")
+		for _ in range(k):
+			ordered_clusters.append([])
+		for iter, i in enumerate(clusters):
+			ordered_clusters[i].append(iter)
+		for iter, i in enumerate(ordered_clusters):
+			f.write("g cluster" +  str(iter) + '\n')
+			f.write("usemtl " + colours[iter] + '\n')
+			for j in i:
+				f.write("f ")
+				f.write(str(int(faces_array[int(j)][0])))
+				f.write(" ")
+				f.write(str(int(faces_array[int(j)][1])))
+				f.write(" ")
+				f.write(str(int(faces_array[int(j)][2])))
+				f.write("\n")
+			f.write("\n")
+	f.close()
+
+
+
+
+	
 def processfile(fname):
 	# Read an obj file and return its faces and vertices
 	with open(fname) as f:
@@ -216,7 +254,7 @@ def initial_guess(Q, k):
 		chosen.append(new_index)
 	return chosen
 	
-filename = "data/bunny5k.obj"
+filename = sys.argv[1]
 faces_array, vertices_array, adjacency_map = processfile(filename) 
 
 # affinity matrix
@@ -245,4 +283,9 @@ cluster_res,_ = scipy.cluster.vq.kmeans(V, V[initial_clusters,:])
 # get identification vector
 idx,_ = scipy.cluster.vq.vq(V, cluster_res)
 
+for iter, i in enumerate(idx):
+	print iter, ": ", i
 print("mesh_segmentation: Done clustering!")
+
+writeoutputobj(sys.argv[2], idx, faces_array, vertices_array)
+
